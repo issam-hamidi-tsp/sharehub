@@ -1,0 +1,115 @@
+🔗 COMMANDES GIT - COPIER/COLLER
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Si vous n'aimez pas taper les commandes, copiez/collez celles-ci:
+
+⚠️ Remplacez VOTRE_EMAIL par votre email GitHub
+⚠️ Remplacez VOTRE_NOM par votre nom GitHub
+⚠️ Remplacez VOTRENOM par votre username GitHub
+
+═══════════════════════════════════════════════════════════════════════════════
+
+1️⃣  CONFIGURATION GIT (Une seule fois)
+
+Copier/coller dans PowerShell:
+
+git config --global user.name "VOTRE_NOM"
+git config --global user.email "VOTRE_EMAIL"
+
+Exemple:
+git config --global user.name "Issam"
+git config --global user.email "issam@example.com"
+
+═══════════════════════════════════════════════════════════════════════════════
+
+2️⃣  INITIALISER LE REPOSITORY LOCAL
+
+Copier/coller dans PowerShell:
+
+cd "C:\Users\Issam\Documents\espace copie"
+git init
+git add .
+git commit -m "ShareHub - Initial commit"
+
+═══════════════════════════════════════════════════════════════════════════════
+
+3️⃣  AJOUTER LE REMOTE GITHUB
+
+Copier/coller dans PowerShell (en remplaçant VOTRENOM):
+
+git remote add origin https://github.com/VOTRENOM/sharehub.git
+git branch -M main
+
+Exemple (si username est "issam-sharehub"):
+git remote add origin https://github.com/issam-sharehub/sharehub.git
+
+═══════════════════════════════════════════════════════════════════════════════
+
+4️⃣  POUSSER LE CODE SUR GITHUB
+
+Copier/coller dans PowerShell:
+
+git push -u origin main
+
+Il vous demandera:
+- Username: VOTRE_EMAIL GitHub
+- Password: LE TOKEN QUE VOUS AVEZ GÉNÉRÉ
+
+═══════════════════════════════════════════════════════════════════════════════
+
+5️⃣  POUSSER LES MISES À JOUR (Plus tard)
+
+Quand vous avez fait des modifications localement:
+
+git add .
+git commit -m "Description de votre modification"
+git push
+
+═══════════════════════════════════════════════════════════════════════════════
+
+6️⃣  VÉRIFIER QUE TOUT VA BIEN
+
+Vérifier la configuration Git:
+git config --list
+
+Vérifier le remote:
+git remote -v
+
+Vérifier le statut:
+git status
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✨ COMMANDES COMPLÈTES (Copier/coller d'un bloc)
+
+Si vous voulez copier/coller tout d'un coup:
+
+git config --global user.name "VOTRE_NOM"
+git config --global user.email "VOTRE_EMAIL"
+cd "C:\Users\Issam\Documents\espace copie"
+git init
+git add .
+git commit -m "ShareHub - Initial commit"
+git remote add origin https://github.com/VOTRENOM/sharehub.git
+git branch -M main
+git push -u origin main
+
+⚠️ N'OUBLIEZ PAS de remplacer les valeurs!
+
+═══════════════════════════════════════════════════════════════════════════════
+
+💡 ASTUCES
+
+Quand vous avez un doute:
+git status                    - Voir l'état du repository
+git log                       - Voir l'historique des commits
+git remote -v                 - Voir l'adresse du remote
+
+Si vous avez un problème:
+git remote remove origin
+git remote add origin https://github.com/VOTRENOM/sharehub.git
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ VOILÀ! Vous avez toutes les commandes nécessaires.

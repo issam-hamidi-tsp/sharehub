@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShareHub - Espace Collaboratif en Temps Réel</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="background-gradient"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-top">
+                    <h1 class="logo">
+                        <span class="logo-icon">🔗</span>
+                        ShareHub
+                    </h1>
+                    <div class="users-badge">
+                        <span class="users-icon">👥</span>
+                        <span id="usersCount">0</span>
+                    </div>
+                </div>
+                <p class="tagline">Espace collaboratif en temps réel pour texte et fichiers</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Panel Texte -->
+            <div class="panel text-panel">
+                <h2>📝 Texte Partagé</h2>
+                <p class="subtitle">Modifiez le texte - tout le monde verra les changements en direct</p>
+                
+                <textarea 
+                    id="sharedText" 
+                    class="shared-textarea" 
+                    placeholder="Écrivez ici... Vos changements sont visibles par tous en temps réel!"></textarea>
+                
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="clearText()">
+                        <span class="btn-icon">🗑️</span> Effacer le texte
+                    </button>
+                    <span class="auto-save-indicator" id="autoSaveIndicator">✅ Sauvegardé</span>
+                </div>
+            </div>
+
+            <!-- Panel Fichiers -->
+            <div class="panel files-panel">
+                <h2>📁 Fichiers Partagés</h2>
+                <p class="subtitle">Uploadez des fichiers - accessibles à tous</p>
+                
+                <!-- Zone d'upload -->
+                <div class="file-upload-area" id="fileDropZone">
+                    <input type="file" id="fileInput" hidden>
+                    <div class="upload-icon">📂</div>
+                    <h3>Déposez vos fichiers ici</h3>
+                    <p>ou cliquez pour en sélectionner</p>
+                    <span class="file-size-info">(Max 100 MB par fichier)</span>
+                </div>
+
+                <!-- Liste des fichiers -->
+                <div id="filesList" class="files-list">
+                    <p class="empty-state">Aucun fichier pour le moment</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Status Message -->
+        <div id="statusMessage" class="status-message hidden"></div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>🌐 Tous les utilisateurs connectés au site voient le même espace</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

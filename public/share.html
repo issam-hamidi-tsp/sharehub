@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShareHub - Récupérer le contenu</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="background-gradient"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="logo">
+                    <span class="logo-icon">🔗</span>
+                    ShareHub
+                </h1>
+                <p class="tagline">Contenu partagé</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content" style="max-width: 700px; margin: 0 auto; grid-template-columns: 1fr;">
+            <div class="panel retrieve-panel">
+                <h2>📥 Récupérer le contenu</h2>
+                
+                <div id="loadingSection" class="loading">
+                    <p>⏳ Chargement du contenu...</p>
+                </div>
+
+                <!-- Retrieved Content Display -->
+                <div id="retrieveSection" class="retrieve-content-section hidden">
+                    <div class="retrieved-box">
+                        <div id="retrievedText" class="retrieved-text hidden">
+                            <h3>📄 Contenu Récupéré</h3>
+                            <div class="retrieved-content" id="contentDisplay"></div>
+                            <button class="btn btn-secondary" onclick="copyRetrievedText()">
+                                <span class="btn-icon">📋</span> Copier le contenu
+                            </button>
+                        </div>
+
+                        <div id="retrievedFile" class="retrieved-file hidden">
+                            <h3>📁 Fichier Récupéré</h3>
+                            <div class="file-info">
+                                <p><strong>Nom:</strong> <span id="fileName"></span></p>
+                                <p><strong>Taille:</strong> <span id="fileSize"></span></p>
+                            </div>
+                            <button class="btn btn-primary" onclick="downloadFile()">
+                                <span class="btn-icon">⬇️</span> Télécharger
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Messages -->
+                <div id="statusMessage" class="status-message hidden"></div>
+                
+                <!-- Back Link -->
+                <a href="/" class="btn btn-secondary" style="margin-top: 20px;">
+                    <span class="btn-icon">⬅️</span> Retour à l'accueil
+                </a>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>🔒 Vos données sont temporaires et supprimées après 24 heures</p>
+        </footer>
+    </div>
+
+    <script>
+        // Récupérer l'ID depuis l'URL
+        const id = window.location.pathname.split('/').pop();
+
+        // Charger le contenu au démarrage
+        window.addEventListener('load', async () => {
+            if (!id || id === '' || id.includes('.')) {
+                showError('URL invalide');
+                return;
+            }
+
+            try {
+                const infoResponse = await fetch(`/api/info/${id}`);
+                
+                if (!infoResponse.ok) {
+                    throw new Error('Partage non trouvé ou expiré');
+                }
+                
+                const info = await infoResponse.json();
+                
+                if (info.type === 'text') {
+                    const contentResponse = await fetch(`/api/share/${id}`);
+                    if (!contentResponse.ok) throw new Error('Erreur de récupération');
+                    
+                    const content = await contentResponse.json();
+                    displayRetrievedText(content.content);
+                    
+                } else if (info.type === 'file') {
+                    displayRetrievedFile(id, info.filename, info.size);
+                }
+                
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('retrieveSection').classList.remove('hidden');
+                
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        // Afficher le texte récupéré
+        function displayRetrievedText(content) {
+            document.getElementById('retrievedText').classList.remove('hidden');
+            document.getElementById('retrievedFile').classList.add('hidden');
+            document.getElementById('contentDisplay').textContent = content;
+        }
+
+        // Afficher le fichier récupéré
+        function displayRetrievedFile(fileId, filename, size) {
+            document.getElementById('retrievedText').classList.add('hidden');
+            document.getElementById('retrievedFile').classList.remove('hidden');
+            document.getElementById('fileName').textContent = filename;
+            document.getElementById('fileSize').textContent = formatFileSize(size);
+            
+            document.getElementById('retrievedFile').dataset.fileId = fileId;
+        }
+
+        // Copier le contenu récupéré
+        function copyRetrievedText() {
+            const content = document.getElementById('contentDisplay').textContent;
+            const textarea = document.createElement('textarea');
+            textarea.value = content;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            const btn = event.target.closest('.btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="btn-icon">✅</span> Copié!';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+            }, 2000);
+        }
+
+        // Télécharger le fichier
+        function downloadFile() {
+            const fileId = document.getElementById('retrievedFile').dataset.fileId;
+            window.location.href = `/api/download/${fileId}`;
+        }
+
+        // Afficher une erreur
+        function showError(message) {
+            document.getElementById('loadingSection').style.display = 'none';
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = '❌ Erreur: ' + message;
+            statusMessage.className = 'status-message show error';
+        }
+
+        // Formater la taille des fichiers
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

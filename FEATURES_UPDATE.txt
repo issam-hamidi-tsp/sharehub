@@ -1,0 +1,98 @@
+🎉 SHAREHUB - ESPACE COLLABORATIF EN TEMPS RÉEL
+
+═══════════════════════════════════════════════════════════════
+
+✨ MISES À JOUR EFFECTUÉES
+
+✅ Expiration Automatique des Fichiers (5 minutes)
+   • Tous les fichiers uploadés expirent automatiquement après 5 minutes
+   • Suppression automatique du système de fichiers
+   • Les utilisateurs sont notifiés de la suppression
+
+✅ Suppression Manuelle des Fichiers
+   • Bouton 🗑️ pour supprimer les fichiers manuellement
+   • Suppression visible pour TOUS les utilisateurs
+   • Confirmation avant suppression
+
+✅ Affichage du Temps d'Expiration
+   • Compteur en temps réel "Expire dans 3m 45s"
+   • Couleurs de statut:
+     - Vert: Plus de 1 minute restante
+     - Orange: 30-60 secondes restantes
+     - Rouge: Moins de 30 secondes (clignote)
+     - Gris: Expiré
+
+═══════════════════════════════════════════════════════════════
+
+🚀 ACCÉDER AU SITE
+
+Adresse: http://localhost:3001
+
+(Le port 3001 a été utilisé car le port 3000 était occupé)
+
+═══════════════════════════════════════════════════════════════
+
+📝 FONCTIONNEMENT
+
+1. TEXTE PARTAGÉ
+   • Modifiez le texte → Tous le voient en direct
+   • Sauvegarde automatique
+   • Bouton pour effacer pour tous
+
+2. FICHIERS PARTAGÉS
+   • Upload drag & drop
+   • Liste avec compteur d'expiration
+   • Téléchargement par tous
+   • Suppression manuelle possible
+   • Suppression auto après 5 min si non supprimés
+
+3. TEMPS RÉEL
+   • WebSockets pour synchronisation instantanée
+   • Compteur d'utilisateurs connectés
+   • Notifications des actions
+
+═══════════════════════════════════════════════════════════════
+
+🔍 TESTER LE SYSTÈME
+
+1. Ouvrez http://localhost:3001 dans votre navigateur
+
+2. Uploadez un fichier
+   → Vous verrez le temps d'expiration: "Expire dans 5m"
+
+3. Attendez 5 minutes (ou utilisez plusieurs onglets pour tester)
+   → Le compteur descendra
+   → Le fichier sera supprimé automatiquement
+
+4. Ou supprimez-le manuellement
+   → Cliquez sur 🗑️
+   → Confirmation demandée
+   → Suppression immédiate pour tous
+
+═══════════════════════════════════════════════════════════════
+
+💡 DÉTAILS TECHNIQUES
+
+Vérification de l'expiration: Toutes les 10 secondes
+Durée d'expiration: 5 minutes (300 000 ms)
+Suppression: Système de fichiers + liste en mémoire
+Notifications: WebSockets à tous les clients
+
+═══════════════════════════════════════════════════════════════
+
+🎯 PROCHAINES ÉTAPES OPTIONNELLES
+
+□ Persister les données en base de données
+□ Ajouter authentification utilisateur
+□ Historique des fichiers supprimés
+□ Limite de taille totale
+□ Compression de fichiers
+□ Sauvegarde/Restauration
+
+═══════════════════════════════════════════════════════════════
+
+✅ PROJET PRÊT À L'EMPLOI!
+
+Lancez simplement: npm start (ou double-cliquez run.bat)
+
+Bon partage! 🚀
