@@ -10,7 +10,44 @@
 <body>
     <div class="background-gradient"></div>
     
-    <div class="container">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-box">
+                <h1 class="login-logo">
+                    <span class="login-icon">🔒</span>
+                    ShareHub
+                </h1>
+                <p class="login-subtitle">Accès Sécurisé</p>
+                
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="login-input-group">
+                        <label for="password">Mot de passe:</label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            class="login-input" 
+                            placeholder="Entrez le mot de passe"
+                            required
+                            autocomplete="off"
+                        >
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-login">
+                        <span class="btn-icon">🔑</span> Accéder
+                    </button>
+                </form>
+                
+                <p class="login-error" id="loginError"></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content (Hidden until login) -->
+    <div id="mainContent" class="main-content-wrapper" style="display: none;">
+        <div class="background-gradient"></div>
+        
+        <div class="container">
         <!-- Header -->
         <header class="header">
             <div class="header-content">
@@ -76,6 +113,7 @@
         <footer class="footer">
             <p>🌐 Tous les utilisateurs connectés au site voient le même espace</p>
         </footer>
+        </div>
     </div>
 
     <script src="script.js"></script>
