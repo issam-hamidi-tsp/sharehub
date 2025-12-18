@@ -84,6 +84,8 @@ function initializeApp() {
   // État local
   let isTyping = false;
   let typingTimeout;
+  let filesRefreshTimeout = null;
+  let currentFiles = [];
 
   // ═══════════════════════════════════════════════════════════════
   // ÉVÉNEMENTS WEBSOCKET
@@ -220,13 +222,24 @@ function initializeApp() {
   };
 
   // Afficher la liste des fichiers
-  window.displayFiles = function(files) {
-    if (files.length === 0) {
+  window.displayFiles = function(files, isRefresh = false) {
+    // Annuler le timer précédent pour éviter les conflits
+    if (filesRefreshTimeout) {
+      clearTimeout(filesRefreshTimeout);
+      filesRefreshTimeout = null;
+    }
+    
+    // Stocker les fichiers pour les rafraîchissements
+    if (!isRefresh) {
+      currentFiles = files;
+    }
+    
+    if (currentFiles.length === 0) {
       filesList.innerHTML = '<p class="empty-state">Aucun fichier pour le moment</p>';
       return;
     }
     
-    filesList.innerHTML = files.map(file => {
+    filesList.innerHTML = currentFiles.map(file => {
       const uploadDate = new Date(file.uploadedAt);
       const expiresDate = new Date(file.expiresAt);
       const now = new Date();
@@ -267,9 +280,9 @@ function initializeApp() {
       </div>
     `}).join('');
     
-    // Mettre à jour l'affichage du temps chaque seconde
-    setTimeout(() => {
-      displayFiles(files);
+    // Mettre à jour l'affichage du temps chaque seconde (avec un seul timer actif)
+    filesRefreshTimeout = setTimeout(() => {
+      displayFiles(currentFiles, true);
     }, 1000);
   };
 
