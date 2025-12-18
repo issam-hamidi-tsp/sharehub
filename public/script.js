@@ -2,7 +2,7 @@
 // SYSTÈME DE LOGIN
 // ═══════════════════════════════════════════════════════════════
 
-const CORRECT_PASSWORD = 'ShareHub123';
+const CORRECT_PASSWORD = 'OtmaneSinge';
 const LOGIN_KEY = 'sharehub_authenticated';
 
 // Vérifier si l'utilisateur est déjà authentifié
