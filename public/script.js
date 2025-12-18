@@ -4,12 +4,24 @@
 
 const CORRECT_PASSWORD = 'OtmaneSinge';
 const LOGIN_KEY = 'sharehub_authenticated';
+const PASSWORD_VERSION_KEY = 'sharehub_password_version';
+const CURRENT_PASSWORD_VERSION = 'v2_OtmaneSinge'; // Changer cette valeur à chaque changement de mot de passe
 
 // Vérifier si l'utilisateur est déjà authentifié
 function checkAuthentication() {
   const isAuthenticated = localStorage.getItem(LOGIN_KEY) === 'true';
+  const passwordVersion = localStorage.getItem(PASSWORD_VERSION_KEY);
   const loginScreen = document.getElementById('loginScreen');
   const mainContent = document.getElementById('mainContent');
+  
+  // Si le mot de passe a changé, déconnecter l'utilisateur
+  if (isAuthenticated && passwordVersion !== CURRENT_PASSWORD_VERSION) {
+    localStorage.removeItem(LOGIN_KEY);
+    localStorage.removeItem(PASSWORD_VERSION_KEY);
+    loginScreen.style.display = 'flex';
+    mainContent.style.display = 'none';
+    return;
+  }
   
   if (isAuthenticated) {
     loginScreen.style.display = 'none';
@@ -31,6 +43,7 @@ function handleLogin(event) {
   
   if (password === CORRECT_PASSWORD) {
     localStorage.setItem(LOGIN_KEY, 'true');
+    localStorage.setItem(PASSWORD_VERSION_KEY, CURRENT_PASSWORD_VERSION);
     loginError.textContent = '';
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('mainContent').style.display = 'block';
