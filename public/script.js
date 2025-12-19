@@ -8,16 +8,46 @@ const PASSWORD_VERSION_KEY = 'sharehub_password_version';
 const CURRENT_PASSWORD_VERSION = 'v2_OtmaneSinge'; // Changer cette valeur à chaque changement de mot de passe
 
 // Vérifier si l'utilisateur est déjà authentifié
-function checkAuthentication() {
-  const isAuthenticated = localStorage.getItem(LOGIN_KEY) === 'true';
-  const passwordVersion = localStorage.getItem(PASSWORD_VERSION_KEY);
+async function checkAuthentication() {
   const loginScreen = document.getElementById('loginScreen');
   const mainContent = document.getElementById('mainContent');
   
-  // Si le mot de passe a changé, déconnecter l'utilisateur
-  if (isAuthenticated && passwordVersion !== CURRENT_PASSWORD_VERSION) {
+  // Vérifier si l'URL contient un paramètre d'authentification Google
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('googleAuth') === 'success') {
+    // Supprimer le paramètre de l'URL
+    window.history.replaceState({}, document.title, '/');
+    localStorage.setItem(LOGIN_KEY, 'true');
+    localStorage.setItem('auth_method', 'google');
+  }
+  
+  // Vérifier l'authentification Google côté serveur
+  try {
+    const response = await fetch('/auth/check');
+    const data = await response.json();
+    
+    if (data.authenticated) {
+      localStorage.setItem(LOGIN_KEY, 'true');
+      localStorage.setItem('auth_method', 'google');
+      loginScreen.style.display = 'none';
+      mainContent.style.display = 'block';
+      initializeApp();
+      return;
+    }
+  } catch (error) {
+    console.log('Pas d\'authentification Google active');
+  }
+  
+  // Vérifier l'authentification par mot de passe
+  const isAuthenticated = localStorage.getItem(LOGIN_KEY) === 'true';
+  const passwordVersion = localStorage.getItem(PASSWORD_VERSION_KEY);
+  const authMethod = localStorage.getItem('auth_method');
+  
+  // Si authentifié par mot de passe et que le mot de passe a changé
+  if (isAuthenticated && authMethod === 'password' && passwordVersion !== CURRENT_PASSWORD_VERSION) {
     localStorage.removeItem(LOGIN_KEY);
     localStorage.removeItem(PASSWORD_VERSION_KEY);
+    localStorage.removeItem('auth_method');
     loginScreen.style.display = 'flex';
     mainContent.style.display = 'none';
     return;
@@ -33,6 +63,11 @@ function checkAuthentication() {
   }
 }
 
+// Connexion avec Google
+function loginWithGoogle() {
+  window.location.href = '/auth/google';
+}
+
 // Gérer la soumission du formulaire de login
 function handleLogin(event) {
   event.preventDefault();
@@ -44,6 +79,7 @@ function handleLogin(event) {
   if (password === CORRECT_PASSWORD) {
     localStorage.setItem(LOGIN_KEY, 'true');
     localStorage.setItem(PASSWORD_VERSION_KEY, CURRENT_PASSWORD_VERSION);
+    localStorage.setItem('auth_method', 'password');
     loginError.textContent = '';
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('mainContent').style.display = 'block';

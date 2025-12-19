@@ -354,6 +354,60 @@ body {
     left: 100%;
 }
 
+.login-separator {
+    position: relative;
+    text-align: center;
+    margin: 24px 0;
+}
+
+.login-separator::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--gray-300);
+}
+
+.login-separator span {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0 16px;
+    position: relative;
+    color: var(--gray-500);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.btn-google {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    border: 2px solid var(--gray-200);
+    border-radius: 14px;
+    cursor: pointer;
+    background: white;
+    color: var(--gray-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+}
+
+.btn-google:hover {
+    background: var(--gray-50);
+    border-color: var(--gray-300);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-google svg {
+    flex-shrink: 0;
+}
+
 .login-error {
     text-align: center;
     color: #ef4444;
