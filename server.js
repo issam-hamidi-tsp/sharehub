@@ -5,9 +5,6 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
-const session = require('express-session');
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 const app = express();
 const server = http.createServer(app);
@@ -19,47 +16,6 @@ const io = socketIo(server, {
 });
 
 const PORT = process.env.PORT || 3000;
-
-// Configuration Google OAuth
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID';
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || 'YOUR_GOOGLE_CLIENT_SECRET';
-const CALLBACK_URL = process.env.CALLBACK_URL || `http://localhost:${PORT}/auth/google/callback`;
-
-// Session middleware
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'sharehub-secret-key-2024',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 heures
-  }
-}));
-
-// Passport middleware
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Configuration Passport Google Strategy
-passport.use(new GoogleStrategy({
-    clientID: GOOGLE_CLIENT_ID,
-    clientSecret: GOOGLE_CLIENT_SECRET,
-    callbackURL: CALLBACK_URL
-  },
-  (accessToken, refreshToken, profile, done) => {
-    // Ici vous pouvez sauvegarder l'utilisateur dans une base de données
-    // Pour l'instant, on retourne simplement le profil
-    return done(null, profile);
-  }
-));
-
-passport.serializeUser((user, done) => {
-  done(null, user);
-});
-
-passport.deserializeUser((user, done) => {
-  done(null, user);
-});
 
 // Middleware
 app.use(express.json({ limit: '50mb' }));
@@ -91,48 +47,6 @@ const sharedSpace = {
   files: [],
   users: 0
 };
-
-// Routes d'authentification Google
-
-// Démarrer l'authentification Google
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
-
-// Callback Google
-app.get('/auth/google/callback', 
-  passport.authenticate('google', { failureRedirect: '/' }),
-  (req, res) => {
-    // Authentification réussie
-    res.redirect('/?googleAuth=success');
-  }
-);
-
-// Vérifier si l'utilisateur est authentifié
-app.get('/auth/check', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.json({ 
-      authenticated: true, 
-      user: {
-        displayName: req.user.displayName,
-        email: req.user.emails?.[0]?.value,
-        photo: req.user.photos?.[0]?.value
-      }
-    });
-  } else {
-    res.json({ authenticated: false });
-  }
-});
-
-// Déconnexion
-app.get('/auth/logout', (req, res) => {
-  req.logout((err) => {
-    if (err) {
-      return res.json({ success: false });
-    }
-    res.json({ success: true });
-  });
-});
 
 // Routes API
 

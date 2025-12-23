@@ -8,46 +8,16 @@ const PASSWORD_VERSION_KEY = 'sharehub_password_version';
 const CURRENT_PASSWORD_VERSION = 'v2_OtmaneSinge'; // Changer cette valeur à chaque changement de mot de passe
 
 // Vérifier si l'utilisateur est déjà authentifié
-async function checkAuthentication() {
+function checkAuthentication() {
+  const isAuthenticated = localStorage.getItem(LOGIN_KEY) === 'true';
+  const passwordVersion = localStorage.getItem(PASSWORD_VERSION_KEY);
   const loginScreen = document.getElementById('loginScreen');
   const mainContent = document.getElementById('mainContent');
   
-  // Vérifier si l'URL contient un paramètre d'authentification Google
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('googleAuth') === 'success') {
-    // Supprimer le paramètre de l'URL
-    window.history.replaceState({}, document.title, '/');
-    localStorage.setItem(LOGIN_KEY, 'true');
-    localStorage.setItem('auth_method', 'google');
-  }
-  
-  // Vérifier l'authentification Google côté serveur
-  try {
-    const response = await fetch('/auth/check');
-    const data = await response.json();
-    
-    if (data.authenticated) {
-      localStorage.setItem(LOGIN_KEY, 'true');
-      localStorage.setItem('auth_method', 'google');
-      loginScreen.style.display = 'none';
-      mainContent.style.display = 'block';
-      initializeApp();
-      return;
-    }
-  } catch (error) {
-    console.log('Pas d\'authentification Google active');
-  }
-  
-  // Vérifier l'authentification par mot de passe
-  const isAuthenticated = localStorage.getItem(LOGIN_KEY) === 'true';
-  const passwordVersion = localStorage.getItem(PASSWORD_VERSION_KEY);
-  const authMethod = localStorage.getItem('auth_method');
-  
-  // Si authentifié par mot de passe et que le mot de passe a changé
-  if (isAuthenticated && authMethod === 'password' && passwordVersion !== CURRENT_PASSWORD_VERSION) {
+  // Si le mot de passe a changé, déconnecter l'utilisateur
+  if (isAuthenticated && passwordVersion !== CURRENT_PASSWORD_VERSION) {
     localStorage.removeItem(LOGIN_KEY);
     localStorage.removeItem(PASSWORD_VERSION_KEY);
-    localStorage.removeItem('auth_method');
     loginScreen.style.display = 'flex';
     mainContent.style.display = 'none';
     return;
@@ -63,11 +33,6 @@ async function checkAuthentication() {
   }
 }
 
-// Connexion avec Google
-function loginWithGoogle() {
-  window.location.href = '/auth/google';
-}
-
 // Gérer la soumission du formulaire de login
 function handleLogin(event) {
   event.preventDefault();
@@ -79,7 +44,6 @@ function handleLogin(event) {
   if (password === CORRECT_PASSWORD) {
     localStorage.setItem(LOGIN_KEY, 'true');
     localStorage.setItem(PASSWORD_VERSION_KEY, CURRENT_PASSWORD_VERSION);
-    localStorage.setItem('auth_method', 'password');
     loginError.textContent = '';
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('mainContent').style.display = 'block';
@@ -122,6 +86,20 @@ function initializeApp() {
   let typingTimeout;
   let filesRefreshTimeout = null;
   let currentFiles = [];
+  let isPageVisible = true;
+
+  // Gérer la visibilité de la page pour optimiser les rafraîchissements
+  document.addEventListener('visibilitychange', () => {
+    isPageVisible = !document.hidden;
+    if (isPageVisible && currentFiles.length > 0) {
+      // Rafraîchir l'affichage quand l'utilisateur revient sur la page
+      displayFiles(currentFiles, true);
+    } else if (!isPageVisible && filesRefreshTimeout) {
+      // Arrêter les rafraîchissements quand l'utilisateur quitte la page
+      clearTimeout(filesRefreshTimeout);
+      filesRefreshTimeout = null;
+    }
+  });
 
   // ═══════════════════════════════════════════════════════════════
   // ÉVÉNEMENTS WEBSOCKET
@@ -131,7 +109,13 @@ function initializeApp() {
   socket.on('state_update', (data) => {
     sharedTextarea.value = data.text;
     usersCount.textContent = data.users;
-    displayFiles(data.files);
+    // Filtrer les fichiers expirés avant affichage
+    const now = new Date();
+    const validFiles = data.files.filter(f => {
+      if (!f.expiresAt) return true;
+      return new Date(f.expiresAt) > now;
+    });
+    displayFiles(validFiles);
   });
 
   // Mise à jour du texte en temps réel
@@ -145,7 +129,13 @@ function initializeApp() {
 
   // Mise à jour de la liste des fichiers
   socket.on('files_updated', (data) => {
-    displayFiles(data.files);
+    // Filtrer les fichiers expirés avant affichage
+    const now = new Date();
+    const validFiles = data.files.filter(f => {
+      if (!f.expiresAt) return true;
+      return new Date(f.expiresAt) > now;
+    });
+    displayFiles(validFiles);
   });
 
   // Notification de suppression automatique
@@ -186,13 +176,59 @@ function initializeApp() {
     }, 1000);
   });
 
-  // Effacer tout le texte
+  // Sélectionner tout le texte
+  window.selectAllText = function() {
+    sharedTextarea.select();
+    showNotification('Texte sélectionné', 'info');
+  };
+
+  // Copier le texte
+  window.copyText = function() {
+    sharedTextarea.select();
+    navigator.clipboard.writeText(sharedTextarea.value)
+      .then(() => {
+        showNotification('Texte copié dans le presse-papiers!', 'success');
+        // Désélectionner après la copie
+        sharedTextarea.selectionStart = sharedTextarea.selectionEnd = 0;
+      })
+      .catch(err => {
+        // Fallback pour anciens navigateurs
+        try {
+          document.execCommand('copy');
+          showNotification('Texte copié dans le presse-papiers!', 'success');
+        } catch (e) {
+          showNotification('Impossible de copier le texte', 'error');
+        }
+      });
+  };
+
+  // Coller du texte
+  window.pasteText = function() {
+    navigator.clipboard.readText()
+      .then(text => {
+        const cursorPos = sharedTextarea.selectionStart;
+        const textBefore = sharedTextarea.value.substring(0, cursorPos);
+        const textAfter = sharedTextarea.value.substring(sharedTextarea.selectionEnd);
+        sharedTextarea.value = textBefore + text + textAfter;
+        
+        // Mettre à jour la position du curseur
+        const newPos = cursorPos + text.length;
+        sharedTextarea.selectionStart = sharedTextarea.selectionEnd = newPos;
+        
+        // Envoyer la mise à jour
+        socket.emit('text_update', { text: sharedTextarea.value });
+        showNotification('Texte collé!', 'success');
+      })
+      .catch(err => {
+        showNotification('Impossible d\'accéder au presse-papiers. Utilisez Ctrl+V', 'error');
+      });
+  };
+
+  // Effacer tout le texte (sans confirmation)
   window.clearText = function() {
-    if (confirm('Êtes-vous sûr de vouloir effacer tout le texte?\n\nCela affectera TOUS les utilisateurs connectés!')) {
-      sharedTextarea.value = '';
-      socket.emit('text_update', { text: '' });
-      showNotification('Texte effacé pour tous', 'success');
-    }
+    sharedTextarea.value = '';
+    socket.emit('text_update', { text: '' });
+    showNotification('Texte effacé pour tous', 'success');
   };
 
   // ═══════════════════════════════════════════════════════════════
@@ -247,6 +283,7 @@ function initializeApp() {
       if (data.success) {
         showNotification(`${file.name} ajouté(e)!`, 'success');
         fileInput.value = '';
+        // Pas besoin de rafraîchir manuellement, le socket s'en charge
       } else {
         showNotification('Erreur lors de l\'upload', 'error');
       }
@@ -265,10 +302,8 @@ function initializeApp() {
       filesRefreshTimeout = null;
     }
     
-    // Stocker les fichiers pour les rafraîchissements
-    if (!isRefresh) {
-      currentFiles = files;
-    }
+    // Toujours mettre à jour la liste des fichiers depuis le serveur
+    currentFiles = files;
     
     if (currentFiles.length === 0) {
       filesList.innerHTML = '<p class="empty-state">Aucun fichier pour le moment</p>';
@@ -277,23 +312,32 @@ function initializeApp() {
     
     filesList.innerHTML = currentFiles.map(file => {
       const uploadDate = new Date(file.uploadedAt);
-      const expiresDate = new Date(file.expiresAt);
       const now = new Date();
-      const timeLeft = Math.max(0, Math.ceil((expiresDate - now) / 1000)); // en secondes
-      const minutes = Math.floor(timeLeft / 60);
-      const seconds = timeLeft % 60;
       
+      // Vérifier si le fichier a une date d'expiration
       let expiresText = '';
       let expiresClass = '';
-      if (timeLeft > 60) {
-        expiresText = `Expire dans ${minutes}m`;
-        expiresClass = 'expires-soon';
-      } else if (timeLeft > 0) {
-        expiresText = `Expire dans ${seconds}s`;
-        expiresClass = 'expires-very-soon';
+      
+      if (file.expiresAt) {
+        const expiresDate = new Date(file.expiresAt);
+        const timeLeft = Math.max(0, Math.ceil((expiresDate - now) / 1000)); // en secondes
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        
+        if (timeLeft > 60) {
+          expiresText = `Expire dans ${minutes}m`;
+          expiresClass = 'expires-soon';
+        } else if (timeLeft > 0) {
+          expiresText = `Expire dans ${seconds}s`;
+          expiresClass = 'expires-very-soon';
+        } else {
+          // Fichier expiré - ne pas l'afficher
+          return '';
+        }
       } else {
-        expiresText = 'Expiré';
-        expiresClass = 'expired';
+        // Pas de date d'expiration
+        expiresText = 'Permanent';
+        expiresClass = '';
       }
       
       return `
@@ -316,10 +360,21 @@ function initializeApp() {
       </div>
     `}).join('');
     
-    // Mettre à jour l'affichage du temps chaque seconde (avec un seul timer actif)
-    filesRefreshTimeout = setTimeout(() => {
-      displayFiles(currentFiles, true);
-    }, 1000);
+    // Filtrer les fichiers expirés de la liste affichée
+    currentFiles = currentFiles.filter(f => {
+      if (!f.expiresAt) return true;
+      const expiresDate = new Date(f.expiresAt);
+      return expiresDate > new Date();
+    });
+    
+    // Mettre à jour l'affichage du temps chaque seconde seulement s'il y a des fichiers ET si la page est visible
+    if (currentFiles.length > 0 && isPageVisible) {
+      filesRefreshTimeout = setTimeout(() => {
+        displayFiles(currentFiles, true);
+      }, 1000);
+    } else if (currentFiles.length === 0) {
+      filesList.innerHTML = '<p class="empty-state">Aucun fichier pour le moment</p>';
+    }
   };
 
   // Télécharger un fichier
@@ -386,7 +441,13 @@ function initializeApp() {
     .then(res => res.json())
     .then(data => {
       sharedTextarea.value = data.text;
-      displayFiles(data.files);
+      // Filtrer les fichiers expirés avant affichage
+      const now = new Date();
+      const validFiles = data.files.filter(f => {
+        if (!f.expiresAt) return true;
+        return new Date(f.expiresAt) > now;
+      });
+      displayFiles(validFiles);
       usersCount.textContent = data.users;
     })
     .catch(err => console.error(err));
