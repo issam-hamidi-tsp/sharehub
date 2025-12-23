@@ -2,10 +2,10 @@
 // SYSTÈME DE LOGIN
 // ═══════════════════════════════════════════════════════════════
 
-const CORRECT_PASSWORD = 'OtmaneSinge';
+const CORRECT_PASSWORD = 'ShareHub123';
 const LOGIN_KEY = 'sharehub_authenticated';
 const PASSWORD_VERSION_KEY = 'sharehub_password_version';
-const CURRENT_PASSWORD_VERSION = 'v2_OtmaneSinge'; // Changer cette valeur à chaque changement de mot de passe
+const CURRENT_PASSWORD_VERSION = 'v3_ShareHub123'; // Changer cette valeur à chaque changement de mot de passe
 
 // Vérifier si l'utilisateur est déjà authentifié
 function checkAuthentication() {
