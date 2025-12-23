@@ -57,7 +57,13 @@ app.get('/api/text', (req, res) => {
 
 // Récupérer la liste des fichiers
 app.get('/api/files', (req, res) => {
-  res.json({ files: sharedSpace.files });
+  res.json({ files: sharedSpace.files.map(f => ({
+    id: f.id,
+    originalName: f.originalName,
+    size: f.size,
+    uploadedAt: f.uploadedAt,
+    expiresAt: f.expiresAt
+  })) });
 });
 
 // Récupérer un fichier
@@ -136,7 +142,8 @@ app.get('/api/state', (req, res) => {
       id: f.id,
       originalName: f.originalName,
       size: f.size,
-      uploadedAt: f.uploadedAt
+      uploadedAt: f.uploadedAt,
+      expiresAt: f.expiresAt
     })),
     users: sharedSpace.users
   });
@@ -154,7 +161,8 @@ io.on('connection', (socket) => {
       id: f.id,
       originalName: f.originalName,
       size: f.size,
-      uploadedAt: f.uploadedAt
+      uploadedAt: f.uploadedAt,
+      expiresAt: f.expiresAt
     })),
     users: sharedSpace.users
   });
