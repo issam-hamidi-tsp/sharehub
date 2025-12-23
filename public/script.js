@@ -79,6 +79,7 @@ function initializeApp() {
   let filesRefreshTimeout = null;
   let currentFiles = [];
   let isPageVisible = true;
+  let lastFilesSignature = ''; // Pour détecter les vrais changements
 
   // Gérer la visibilité de la page pour optimiser les rafraîchissements
   document.addEventListener('visibilitychange', () => {
@@ -338,46 +339,80 @@ function initializeApp() {
       filesRefreshTimeout = null;
     }
     
-    // Toujours mettre à jour la liste des fichiers depuis le serveur
+    // Créer une signature pour détecter les changements réels (hors temps d'expiration)
+    const newSignature = files.map(f => f.id).sort().join(',');
+    const shouldRebuildHTML = !isRefresh || newSignature !== lastFilesSignature;
+    
+    // Mettre à jour la liste des fichiers
     currentFiles = files;
     
     if (currentFiles.length === 0) {
       filesList.innerHTML = '<p class="empty-state">Aucun fichier pour le moment</p>';
+      lastFilesSignature = '';
       return;
     }
     
-    filesList.innerHTML = currentFiles.map(file => {
-      const uploadDate = new Date(file.uploadedAt);
-      const now = new Date();
-      
-      // Vérifier si le fichier a une date d'expiration
-      let expiresText = '';
-      let expiresClass = '';
-      
-      if (file.expiresAt) {
-        const expiresDate = new Date(file.expiresAt);
-        const timeLeft = Math.max(0, Math.ceil((expiresDate - now) / 1000)); // en secondes
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-        
-        if (timeLeft > 60) {
-          expiresText = `Expire dans ${minutes}m`;
-          expiresClass = 'expires-soon';
-        } else if (timeLeft > 0) {
-          expiresText = `Expire dans ${seconds}s`;
-          expiresClass = 'expires-very-soon';
-        } else {
-          // Fichier expiré - ne pas l'afficher
-          return '';
+    // Si c'est juste un rafraîchissement du temps et que les fichiers sont les mêmes,
+    // mettre à jour uniquement le texte du temps d'expiration au lieu de tout reconstruire
+    if (isRefresh && !shouldRebuildHTML) {
+      currentFiles.forEach(file => {
+        const fileElement = filesList.querySelector(`[data-file-id="${file.id}"]`);
+        if (fileElement && file.expiresAt) {
+          const expiresSpan = fileElement.querySelector('.file-expires');
+          if (expiresSpan) {
+            const now = new Date();
+            const expiresDate = new Date(file.expiresAt);
+            const timeLeft = Math.max(0, Math.ceil((expiresDate - now) / 1000));
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            
+            if (timeLeft > 60) {
+              expiresSpan.textContent = `Expire dans ${minutes}m`;
+              expiresSpan.className = 'file-expires expires-soon';
+            } else if (timeLeft > 0) {
+              expiresSpan.textContent = `Expire dans ${seconds}s`;
+              expiresSpan.className = 'file-expires expires-very-soon';
+            } else {
+              // Fichier expiré - le supprimer du DOM
+              fileElement.remove();
+            }
+          }
         }
-      } else {
-        // Pas de date d'expiration
-        expiresText = 'Permanent';
-        expiresClass = '';
-      }
-      
-      return `
-      <div class="file-item">
+      });
+    } else {
+      // Reconstruire complètement le HTML (nouveau fichier, suppression, etc.)
+      filesList.innerHTML = currentFiles.map(file => {
+        const uploadDate = new Date(file.uploadedAt);
+        const now = new Date();
+        
+        // Vérifier si le fichier a une date d'expiration
+        let expiresText = '';
+        let expiresClass = '';
+        
+        if (file.expiresAt) {
+          const expiresDate = new Date(file.expiresAt);
+          const timeLeft = Math.max(0, Math.ceil((expiresDate - now) / 1000)); // en secondes
+          const minutes = Math.floor(timeLeft / 60);
+          const seconds = timeLeft % 60;
+          
+          if (timeLeft > 60) {
+            expiresText = `Expire dans ${minutes}m`;
+            expiresClass = 'expires-soon';
+          } else if (timeLeft > 0) {
+            expiresText = `Expire dans ${seconds}s`;
+            expiresClass = 'expires-very-soon';
+          } else {
+            // Fichier expiré - ne pas l'afficher
+            return '';
+          }
+        } else {
+          // Pas de date d'expiration
+          expiresText = 'Permanent';
+          expiresClass = '';
+        }
+        
+        return `
+      <div class="file-item" data-file-id="${file.id}">
         <div class="file-info">
           <span class="file-icon">📄</span>
           <div class="file-details">
@@ -395,6 +430,9 @@ function initializeApp() {
         </div>
       </div>
     `}).join('');
+      
+      lastFilesSignature = newSignature;
+    }
     
     // Filtrer les fichiers expirés de la liste affichée
     currentFiles = currentFiles.filter(f => {
