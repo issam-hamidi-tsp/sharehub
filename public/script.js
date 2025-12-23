@@ -195,25 +195,69 @@ function initializeApp() {
   };
 
   // Coller du texte
-  window.pasteText = function() {
-    navigator.clipboard.readText()
-      .then(text => {
-        const cursorPos = sharedTextarea.selectionStart;
-        const textBefore = sharedTextarea.value.substring(0, cursorPos);
-        const textAfter = sharedTextarea.value.substring(sharedTextarea.selectionEnd);
-        sharedTextarea.value = textBefore + text + textAfter;
-        
-        // Mettre à jour la position du curseur
-        const newPos = cursorPos + text.length;
-        sharedTextarea.selectionStart = sharedTextarea.selectionEnd = newPos;
-        
-        // Envoyer la mise à jour
-        socket.emit('text_update', { text: sharedTextarea.value });
-        showNotification('Texte collé!', 'success');
-      })
-      .catch(err => {
-        showNotification('Impossible d\'accéder au presse-papiers. Utilisez Ctrl+V', 'error');
-      });
+  window.pasteText = async function() {
+    try {
+      // Vérifier si l'API clipboard est disponible
+      if (!navigator.clipboard) {
+        throw new Error('API Clipboard non disponible');
+      }
+      
+      const text = await navigator.clipboard.readText();
+      const cursorPos = sharedTextarea.selectionStart;
+      const textBefore = sharedTextarea.value.substring(0, cursorPos);
+      const textAfter = sharedTextarea.value.substring(sharedTextarea.selectionEnd);
+      sharedTextarea.value = textBefore + text + textAfter;
+      
+      // Mettre à jour la position du curseur
+      const newPos = cursorPos + text.length;
+      sharedTextarea.selectionStart = sharedTextarea.selectionEnd = newPos;
+      
+      // Déclencher l'événement input pour synchroniser
+      const event = new Event('input', { bubbles: true });
+      sharedTextarea.dispatchEvent(event);
+      
+      showNotification('Texte collé!', 'success');
+    } catch (err) {
+      // Alternative : utiliser un champ temporaire invisible pour le collage
+      const tempInput = document.createElement('textarea');
+      tempInput.style.position = 'fixed';
+      tempInput.style.top = '-9999px';
+      tempInput.style.left = '-9999px';
+      document.body.appendChild(tempInput);
+      tempInput.focus();
+      
+      // Attendre un peu pour que le collage se fasse
+      setTimeout(() => {
+        try {
+          document.execCommand('paste');
+          const pastedText = tempInput.value;
+          
+          if (pastedText) {
+            const cursorPos = sharedTextarea.selectionStart;
+            const textBefore = sharedTextarea.value.substring(0, cursorPos);
+            const textAfter = sharedTextarea.value.substring(sharedTextarea.selectionEnd);
+            sharedTextarea.value = textBefore + pastedText + textAfter;
+            
+            const newPos = cursorPos + pastedText.length;
+            sharedTextarea.selectionStart = sharedTextarea.selectionEnd = newPos;
+            
+            // Déclencher l'événement input pour synchroniser
+            const event = new Event('input', { bubbles: true });
+            sharedTextarea.dispatchEvent(event);
+            
+            showNotification('Texte collé!', 'success');
+          } else {
+            sharedTextarea.focus();
+            showNotification('Utilisez Ctrl+V pour coller directement dans la zone de texte', 'info');
+          }
+        } catch (e) {
+          sharedTextarea.focus();
+          showNotification('Utilisez Ctrl+V pour coller directement dans la zone de texte', 'info');
+        } finally {
+          document.body.removeChild(tempInput);
+        }
+      }, 100);
+    }
   };
 
   // Effacer tout le texte (sans confirmation)
