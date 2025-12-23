@@ -6,6 +6,36 @@
     <title>ShareHub - Espace Collaboratif en Temps Réel</title>
     <link rel="stylesheet" href="styles.css">
     <script src="/socket.io/socket.io.js"></script>
+    <style>
+        /* Éviter le flash de la page de connexion */
+        body { opacity: 0; transition: opacity 0.1s; }
+        body.ready { opacity: 1; }
+    </style>
+    <script>
+        // Vérification immédiate de l'authentification AVANT le chargement du DOM
+        (function() {
+            const LOGIN_KEY = 'sharehub_authenticated';
+            const PASSWORD_VERSION_KEY = 'sharehub_password_version';
+            const CURRENT_PASSWORD_VERSION = 'v3_ShareHub123';
+            
+            const isAuthenticated = localStorage.getItem(LOGIN_KEY) === 'true';
+            const passwordVersion = localStorage.getItem(PASSWORD_VERSION_KEY);
+            
+            // Si authentifié et version correcte, marquer pour afficher directement le contenu
+            if (isAuthenticated && passwordVersion === CURRENT_PASSWORD_VERSION) {
+                window.__authChecked = true;
+                window.__isAuthenticated = true;
+            } else {
+                window.__authChecked = true;
+                window.__isAuthenticated = false;
+                // Nettoyer si version incorrecte
+                if (isAuthenticated && passwordVersion !== CURRENT_PASSWORD_VERSION) {
+                    localStorage.removeItem(LOGIN_KEY);
+                    localStorage.removeItem(PASSWORD_VERSION_KEY);
+                }
+            }
+        })();
+    </script>
 </head>
 <body>
     <div class="background-gradient"></div>

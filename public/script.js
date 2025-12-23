@@ -9,27 +9,19 @@ const CURRENT_PASSWORD_VERSION = 'v3_ShareHub123'; // Changer cette valeur à ch
 
 // Vérifier si l'utilisateur est déjà authentifié
 function checkAuthentication() {
-  const isAuthenticated = localStorage.getItem(LOGIN_KEY) === 'true';
-  const passwordVersion = localStorage.getItem(PASSWORD_VERSION_KEY);
   const loginScreen = document.getElementById('loginScreen');
   const mainContent = document.getElementById('mainContent');
   
-  // Si le mot de passe a changé, déconnecter l'utilisateur
-  if (isAuthenticated && passwordVersion !== CURRENT_PASSWORD_VERSION) {
-    localStorage.removeItem(LOGIN_KEY);
-    localStorage.removeItem(PASSWORD_VERSION_KEY);
-    loginScreen.style.display = 'flex';
-    mainContent.style.display = 'none';
-    return;
-  }
-  
-  if (isAuthenticated) {
+  // Utiliser la vérification pré-chargée pour éviter le flash
+  if (window.__authChecked && window.__isAuthenticated) {
     loginScreen.style.display = 'none';
     mainContent.style.display = 'block';
+    document.body.classList.add('ready');
     initializeApp();
   } else {
     loginScreen.style.display = 'flex';
     mainContent.style.display = 'none';
+    document.body.classList.add('ready');
   }
 }
 
